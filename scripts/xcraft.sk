@@ -1,0 +1,227 @@
+on join:
+    if player's name is "x1D":
+        set join message to ""
+    set player's gamemode to survival
+    if {%player%.requiredToJoin} is set:
+        if {%player%.requiredToJoin} isn't online:
+            kick player due to "&cYou need your owner to join."
+    loop 30 times:
+        send {joinMessage.%loop-value%}
+
+    if {home.%player%} is set:
+        set {home.%player%.1} to {home.%player%}
+        delete {home.%player%}
+        send ""
+        send ""
+        send "&a&lYOUR HOME HAS BEEN FIXED."
+        send ""
+        send ""
+
+command /fixhomes:
+    permission: exw.fixhomes
+    trigger:
+        loop all players:
+            if {home.%loop-player%} is set:
+                set {home.%loop-player%.1} to {home.%loop-player%}
+                delete {home.%loop-player%}
+                send "" to loop-player
+                send "" to loop-player
+                send "&a&lYOUR HOME HAS BEEN FIXED." to loop-player
+                send "" to loop-player
+                send "" to loop-player
+
+
+command /find <player>:
+    trigger:
+        if {denyTp::*} contains player:
+            send "&cThat player has finding disabled. (disabled when TP is disabled)"
+            stop
+        send "&a%arg-1%&a is at %rounded down arg-1's x-coordinate%&a, %rounded down arg-1's y-coordinate%&a, %rounded down arg-1's z-coordinate% &7(%distance between player and arg-1%&7m away)"
+
+
+command /tpa <player>:
+    trigger:
+        if {denyTp::*} doesn't contain arg-1:
+            send "&e[Teleport] Sending you to %arg-1%&e, as long as you stand still!"
+            set {_x} to rounded down player's x coordinate
+            set {_z} to rounded down player's z coordinate
+
+            wait 5 seconds
+            
+            if {_x} is rounded down player's x coordinate:
+                if {_z} is rounded down player's z coordinate:
+                    set {lastCoords.%player%} to player's location
+                    set {lastCoords.%player%.action} to "TELEPORTED TO %arg-1%"
+                    teleport player to arg-1
+                    send "&e[Teleport] Travelling to %arg-1%"
+                    send "&c[Teleport] %player%&c is travelling to you." to arg-1
+                    delete {tpCheck.%player%.x}
+                    delete {tpCheck.%player%.z}
+                else:
+                    send "&cTeleportation failed as you moved!"
+            else:
+                send "&cTeleportation failed as you moved!"
+        else:
+            send "&cThat player has teleportation disabled!"
+
+command /tptoggle:
+    trigger:
+        if {denyTp::*} doesn't contain player:
+            add player to {denyTp::*}
+            send "&cDisabling teleportation to you."
+        else:
+            remove player from {denyTp::*}
+            send "&aEnabling teleportation to you."
+
+command /setjoinmsg <number> [<text>]:
+    permission: exw.setjoinmsg
+    trigger:
+        arg-1 <= 30
+        if arg-2 isn't set:
+            delete {joinMessage.%arg-1%}
+            send "&cremoved line %arg-1%"
+            stop
+        if arg-2 is "null":
+            set {joinMessage.%arg-1%} to " "
+        else:
+            set {joinMessage.%arg-1%} to colored arg-2
+        send "&c%arg-1%&c: &f%arg-2%"
+            
+command /joinmsg:
+    trigger:
+        loop 30 times:
+            send {joinMessage.%loop-value%}
+
+
+command /setvisitor <player> <player>:
+    permission: exw.setvisitor
+    trigger:
+        set {%arg-1%.requiredToJoin} to arg-2
+        send "&aYou set %arg-1%&a's owner to %arg-2%"
+
+command /removevisitor <player>:
+    permission: exw.removevisitor
+    trigger:
+        delete {%arg-1%.requiredToJoin}
+        send "&aYou removed %arg-1%&a's owner"
+
+on quit:
+    if player's name is "x1D":
+        set quit message to ""
+    loop all players:
+        if {%loop-player%.requiredToJoin} is player:
+            kick loop-player due to "&cYour owner left the server."
+
+command /checkvisitor <player>:
+    trigger:
+        send "%{%arg-1%.requiredToJoin}%"
+
+command /entitiesnearme:
+    trigger:
+        send "%size of entities in radius 16 of player% entities in this area"
+
+command /sethome <number>:
+    trigger:
+        set {_a} to rounded down arg-1
+        if {_a} > 3:
+            stop
+            send "&cYou can't have more than 3 homes."
+        if arg-1 < 1:
+            stop
+            send "&cInvalid home number."
+        set {home.%player%.%{_a}%} to player's location
+        send "&aSetting Home no.%{_a}%"
+
+command /delhome <number>:
+    trigger:
+        delete {home.%player%.%arg-1%}
+        send "&aDeleting your home no.%arg-1%"
+
+command /home [<number>]:
+    trigger:
+        set {_a} to rounded down arg-1
+        if arg-1 isn't set:
+            set {_a} to 1
+        if {_a} > 3:
+            stop
+            send "&cYou don't have more than 3 homes."
+        if {_a} < 1:
+            stop
+            send "&cInvalid home number."
+        if {home.%player%.%{_a}%} is set:
+            send "&eTeleporting you home if you stay still for 5 seconds!"
+            set {_x} to rounded down player's x coordinate
+            set {_z} to rounded down player's z coordinate
+
+            wait 5 seconds
+            
+            if {_x} is rounded down player's x coordinate:
+                if {_z} is rounded down player's z coordinate:
+                    set {lastCoords.%player%} to player's location
+                    set {lastCoords.%player%.action} to "WENT HOME"
+                    if arg 1 isn't set:
+                        teleport player to {home.%player%.1}
+                        send "&aTeleporting to Home no.1"
+                    else:
+                        teleport player to {home.%player%.%arg-1%}
+                        send "&aTeleporting to Home no.%arg-1%"
+                else:
+                    send "&cTeleportation failed as you moved!"
+            else:
+                send "&cTeleportation failed as you moved!"
+        else:
+            if arg-1 isn't set:
+                send "&cYou don't have home n.1 set."
+            else:
+                send "&cYou don't have home n.%arg-1%&c set."
+
+command /prefix [<text>]:
+    trigger:
+        if arg-1 isn't set:
+            delete {prefix.%player%}
+            send "&cRemoved your prefix."
+        else:
+            if (length of arg-1) > {prefixMax}:
+                send "&cYour prefix must not exceed %{prefixMax}%&c characters!"
+            else:
+                send "&aYou have set your prefix to %coloured arg-1%"
+                set {prefix.%player%} to coloured arg-1
+                set player's tablist name to "%{prefix.%player%}%&f %player%"
+                #set player's nametag to "%{prefix.%player%}%&f %player%"
+
+command /setPrefixMax <number>:
+    permission: exw.prefix
+    trigger:
+        send "&aSet the prefix maximum to %arg-1%"
+        set {prefixMax} to arg-1
+
+on chat:
+    if {prefix.%player%} isn't set:
+        set chat format to "&f%player's name% &8| &f%message%"
+    else:
+        set chat format to "%{prefix.%player%}% &f%player's name% &8| &f%message%"
+
+command /last [<text>]:
+    trigger:
+        if {lastCoords.%player%} isn't set:
+            send "&cYou haven't been anywhere!"
+        else:
+            send "&eThe last died/went home/tpa'd at &f%{lastCoords.%player%}%"
+            send "&eYour last action was &f%{lastCoords.%player%.action}%&e."
+            send "&eThis location is around &f%distance between player and {lastCoords.%player%}% blocks&e away."
+
+on death of player:
+    set {lastCoords.%player%} to player's location
+    set {lastCoords.%player%.action} to "DEATH"
+
+command /help:
+    trigger:
+        send "&e/tpa <player> &f- teleport to an online player"
+        send "&e/tptoggle &f- toggle players teleporting to you"
+        send "&e/last &f- find your last death/teleport location"
+        send "&e/prefix <text> &f- set your chat prefix"
+        send "&e/sethome <number> &f- set your home"
+        send "&e/home <number> &f- teleport to your home"
+        send "&e/delhome <number> &f- delete your home"
+        send "&e/entitiesnearme &f- sends amount of entities near you"
+        send "&e/find <player> &f- find a player's location"
