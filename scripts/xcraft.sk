@@ -236,10 +236,19 @@ command /setPrefixMax <number>:
         set {prefixMax} to arg-1
 
 on chat:
+    cancel event
     if {prefix.%player%} isn't set:
-        set chat format to "&f%player's name% &8| &f%message%"
+        loop all players:
+            if {timeChat::*} contains loop-player:
+                send "&7(%now formatted human-readable%&7) &f%player's name% &8| &f%message%" to loop-player
+            else:
+                send "&f%player's name% &8| &f%message%" to loop-player
     else:
-        set chat format to "%{prefix.%player%}% &f%player's name% &8| &f%message%"
+        loop all players:
+            if {timeChat::*} contains loop-player:
+                send "&7(%now formatted human-readable%&7) %{prefix.%player%}% &f%player's name% &8| &f%message%" to loop-player
+            else:
+                send "%{prefix.%player%}% &f%player's name% &8| &f%message%" to loop-player
 
 # Typically used to find where you died if you were to die.
 command /last [<text>]:
@@ -255,14 +264,45 @@ on death of player:
     set {lastCoords.%player%} to player's location
     set {lastCoords.%player%.action} to "DEATH"
 
-command /help:
+command /help [<number>]:
     trigger:
-        send "&e/tpa <player> &f- teleport to an online player"
-        send "&e/tptoggle &f- toggle players teleporting to you"
-        send "&e/last &f- find your last death/teleport location"
-        send "&e/prefix <text> &f- set your chat prefix"
-        send "&e/sethome <number> &f- set your home"
-        send "&e/home <number> &f- teleport to your home"
-        send "&e/delhome <number> &f- delete your home"
-        send "&e/entitiesnearme &f- sends amount of entities near you"
-        send "&e/find <player> &f- find a player's location"
+        set {_a} to arg-1
+
+        if arg-1 isn't set:
+            set {_a} to 1
+
+        set {_maxPages} to 2
+        set {_helpPage} to "&e&lCOMMANDS &f(pg. &d%{_a}%&d/%{_maxPages}%&f)"
+
+        if {_a} is 1:
+            send ""
+            send "%{_helpPage}%"
+            send ""
+            send "&d[new] &e/timechat &f- add time stamps to chat messages"
+            send "&e/tpa <player> &f- teleport to an online player"
+            send "&e/tptoggle &f- toggle players teleporting to you"
+            send "&e/last &f- find your last death/teleport location"
+            send "&e/prefix <text> &f- set your chat prefix"
+            send "&e/sethome <number> &f- set your home"
+            send "&e/home <number> &f- teleport to your home"
+        else if {_a} is 2:
+            send ""
+            send "%{_helpPage}%"
+            send ""
+            send "&e/delhome <number> &f- delete your home"
+            send "&e/entitiesnearme &f- sends amount of entities near you"
+            send "&e/find <player> &f- find a player's location"
+
+
+command /time:
+    trigger:
+        send "&c%now formatted human-readable%"
+
+command /timechat:
+    trigger:
+        if {timeChat::*} contains player:
+            send "&cRemoved from timed chat."
+            remove player from {timeChat::*}
+        else:
+            send "&aAdded to timed chat."
+            add player to {timeChat::*}
