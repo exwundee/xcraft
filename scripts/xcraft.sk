@@ -1,13 +1,22 @@
 on join:
+
+    # Silent join for admin
     if player's name is "x1D":
         set join message to ""
+
+    # Set player's gamemode to survival for protection.
     set player's gamemode to survival
+
+    # Check if player has a dependent to join.
     if {%player%.requiredToJoin} is set:
         if {%player%.requiredToJoin} isn't online:
             kick player due to "&cYou need your owner to join."
+
+    # Terrible way to display it, but it works. :3
     loop 30 times:
         send {joinMessage.%loop-value%}
 
+    # Added to fix homes from players previous to Multiple Home Update.
     if {home.%player%} is set:
         set {home.%player%.1} to {home.%player%}
         delete {home.%player%}
@@ -20,6 +29,7 @@ on join:
 command /fixhomes:
     permission: exw.fixhomes
     trigger:
+        # Fixes homes for all online players, added for debugging.
         loop all players:
             if {home.%loop-player%} is set:
                 set {home.%loop-player%.1} to {home.%loop-player%}
@@ -33,6 +43,7 @@ command /fixhomes:
 
 command /find <player>:
     trigger:
+        # Check if player is accepting teleport requests.
         if {denyTp::*} contains player:
             send "&cThat player has finding disabled. (disabled when TP is disabled)"
             stop
@@ -41,6 +52,7 @@ command /find <player>:
 
 command /tpa <player>:
     trigger:
+        # Check if player is accepting teleport requests.
         if {denyTp::*} doesn't contain arg-1:
             send "&e[Teleport] Sending you to %arg-1%&e, as long as you stand still!"
             set {_x} to rounded down player's x coordinate
@@ -48,6 +60,7 @@ command /tpa <player>:
 
             wait 5 seconds
             
+            # Has the player moved since he did the command?
             if {_x} is rounded down player's x coordinate:
                 if {_z} is rounded down player's z coordinate:
                     set {lastCoords.%player%} to player's location
@@ -66,6 +79,7 @@ command /tpa <player>:
 
 command /tptoggle:
     trigger:
+        # Does the player already have it on?
         if {denyTp::*} doesn't contain player:
             add player to {denyTp::*}
             send "&cDisabling teleportation to you."
@@ -76,19 +90,28 @@ command /tptoggle:
 command /setjoinmsg <number> [<text>]:
     permission: exw.setjoinmsg
     trigger:
+        # Is the line more than 30?
         arg-1 <= 30
+
+        # Is the argument actually set?
+        # If not, delete it.
         if arg-2 isn't set:
             delete {joinMessage.%arg-1%}
             send "&cremoved line %arg-1%"
             stop
+
+        # If null, it will provide a blank line.
         if arg-2 is "null":
             set {joinMessage.%arg-1%} to " "
+
+        # If so, set it to argument 2.
         else:
             set {joinMessage.%arg-1%} to colored arg-2
         send "&c%arg-1%&c: &f%arg-2%"
             
 command /joinmsg:
     trigger:
+        # Display the join message.
         loop 30 times:
             send {joinMessage.%loop-value%}
 
@@ -96,18 +119,25 @@ command /joinmsg:
 command /setvisitor <player> <player>:
     permission: exw.setvisitor
     trigger:
+        # Give the player a dependent.
+        # Typically added to un-trusted players.
         set {%arg-1%.requiredToJoin} to arg-2
         send "&aYou set %arg-1%&a's owner to %arg-2%"
 
 command /removevisitor <player>:
     permission: exw.removevisitor
     trigger:
+        # Remove the player's dependent.
+        # Typically removed if the player becomes trusted.
         delete {%arg-1%.requiredToJoin}
         send "&aYou removed %arg-1%&a's owner"
 
 on quit:
+    # Silent leave for admins.
     if player's name is "x1D":
         set quit message to ""
+
+    # Is anyone on that requires this player as a dependent? 
     loop all players:
         if {%loop-player%.requiredToJoin} is player:
             kick loop-player due to "&cYour owner left the server."
@@ -118,11 +148,15 @@ command /checkvisitor <player>:
 
 command /entitiesnearme:
     trigger:
+        # Typically used to check nearby entites.
         send "%size of entities in radius 16 of player% entities in this area"
 
 command /sethome <number>:
     trigger:
+        # Use a rounded number to prevent infinite homes.
         set {_a} to rounded down arg-1
+        
+        # Is the homes less than 3 or more than 0?
         if {_a} > 3:
             stop
             send "&cYou can't have more than 3 homes."
@@ -134,14 +168,20 @@ command /sethome <number>:
 
 command /delhome <number>:
     trigger:
+        # Delete lepic home.
         delete {home.%player%.%arg-1%}
         send "&aDeleting your home no.%arg-1%"
 
 command /home [<number>]:
     trigger:
+        # Use a rounded number to prevent infinite homes.
         set {_a} to rounded down arg-1
+
+        # Is the argument set?
         if arg-1 isn't set:
             set {_a} to 1
+
+        # Is the homes less than 3 or more than 0?
         if {_a} > 3:
             stop
             send "&cYou don't have more than 3 homes."
@@ -201,6 +241,7 @@ on chat:
     else:
         set chat format to "%{prefix.%player%}% &f%player's name% &8| &f%message%"
 
+# Typically used to find where you died if you were to die.
 command /last [<text>]:
     trigger:
         if {lastCoords.%player%} isn't set:
